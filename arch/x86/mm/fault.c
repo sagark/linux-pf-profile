@@ -14,6 +14,7 @@
 #include <linux/hugetlb.h>		/* hstate_index_to_shift	*/
 #include <linux/prefetch.h>		/* prefetchw			*/
 #include <linux/context_tracking.h>	/* exception_enter(), ...	*/
+#include <linux/ktime.h>
 
 #include <asm/traps.h>			/* dotraplinkage, ...		*/
 #include <asm/pgalloc.h>		/* pgd_*(), ...			*/
@@ -1248,9 +1249,12 @@ dotraplinkage void __kprobes
 do_page_fault(struct pt_regs *regs, unsigned long error_code)
 {
 	enum ctx_state prev_state;
-
+    ktime_t pf_start, pf_end;
 	prev_state = exception_enter();
+    pf_start = ktime_get();
 	__do_page_fault(regs, error_code);
+    pf_end = ktime_get();
+    printk("pf time: %lld\n", ktime_to_ns(ktime_sub(pf_end, pf_start)));
 	exception_exit(prev_state);
 }
 

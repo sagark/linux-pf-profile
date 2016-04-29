@@ -59,6 +59,7 @@
 #include <linux/gfp.h>
 #include <linux/migrate.h>
 #include <linux/string.h>
+#include <linux/ktime.h>
 
 #include <asm/io.h>
 #include <asm/pgalloc.h>
@@ -3011,6 +3012,12 @@ static int do_swap_page(struct mm_struct *mm, struct vm_area_struct *vma,
 		unsigned long address, pte_t *page_table, pmd_t *pmd,
 		unsigned int flags, pte_t orig_pte)
 {
+    ktime_t print_start, print_end;
+    print_start = ktime_get();
+    printk("swap_page\n");
+    print_end = ktime_get();
+    printk("-print time: %lld\n", ktime_to_ns(ktime_sub(print_end, print_start)));
+
 	spinlock_t *ptl;
 	struct page *page, *swapcache;
 	swp_entry_t entry;
