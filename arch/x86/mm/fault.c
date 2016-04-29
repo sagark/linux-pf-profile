@@ -1250,11 +1250,12 @@ do_page_fault(struct pt_regs *regs, unsigned long error_code)
 {
 	enum ctx_state prev_state;
     ktime_t pf_start, pf_end;
+    long addr = read_cr2();
 	prev_state = exception_enter();
     pf_start = ktime_get();
 	__do_page_fault(regs, error_code);
     pf_end = ktime_get();
-    printk("pf time: %lld\n", ktime_to_ns(ktime_sub(pf_end, pf_start)));
+    printk("pf time for addr %lx: %lld\n", addr, ktime_to_ns(ktime_sub(pf_end, pf_start)));
 	exception_exit(prev_state);
 }
 

@@ -3014,9 +3014,9 @@ static int do_swap_page(struct mm_struct *mm, struct vm_area_struct *vma,
 {
     ktime_t print_start, print_end;
     print_start = ktime_get();
-    printk("swap_page\n");
+    printk("swap_page %lx\n", address);
     print_end = ktime_get();
-    printk("-print time: %lld\n", ktime_to_ns(ktime_sub(print_end, print_start)));
+    printk("-print time for addr %lx: %lld\n", address, ktime_to_ns(ktime_sub(print_end, print_start)));
 
 	spinlock_t *ptl;
 	struct page *page, *swapcache;
