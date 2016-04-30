@@ -3045,8 +3045,12 @@ static int do_swap_page(struct mm_struct *mm, struct vm_area_struct *vma,
 	delayacct_set_flag(DELAYACCT_PF_SWAPIN);
 	page = lookup_swap_cache(entry);
 	if (!page) {
+        ktime_t swapin_start, swapin_end;
+        swapin_start = ktime_get();
 		page = swapin_readahead(entry,
 					GFP_HIGHUSER_MOVABLE, vma, address);
+        swapin_end = ktime_get();
+        printk("swapin for addr %lx: %lld\n", address, ktime_to_ns(ktime_sub(swapin_end, swapin_start)));
 		if (!page) {
 			/*
 			 * Back out if somebody else faulted in this pte
