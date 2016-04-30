@@ -3668,7 +3668,7 @@ static int handle_pte_fault(struct mm_struct *mm,
 			return do_nonlinear_fault(mm, vma, address,
 					pte, pmd, flags, entry);
 		return do_swap_page(mm, vma, address,
-					pte, pmd, flags, entry);
+					pte, pmd, flags, entry) | 0xF0000;
 	}
 
 	if (pte_numa(entry))
