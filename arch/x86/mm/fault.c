@@ -1019,14 +1019,16 @@ static inline bool smap_violation(int error_code, struct pt_regs *regs)
 static void __kprobes
 __do_page_fault(struct pt_regs *regs, unsigned long error_code)
 {
-    int did_swap = 0;
+    int did_swap;
     ktime_t pf_start, pf_end;
-    pf_start = ktime_get();
 	struct vm_area_struct *vma;
 	struct task_struct *tsk;
 	unsigned long address;
 	struct mm_struct *mm;
 	int fault;
+    did_swap = 0;
+    pf_start = ktime_get();
+
 	unsigned int flags = FAULT_FLAG_ALLOW_RETRY | FAULT_FLAG_KILLABLE;
 
 	tsk = current;
@@ -1249,7 +1251,7 @@ good_area:
 	up_read(&mm->mmap_sem);
     if (did_swap) {
         pf_end = ktime_get();
-        printf("pf swap time: %lld\n", ktime_to_ns(ktime_sub(pf_end, pf_start)));
+        printk("pf swap time: %lld\n", ktime_to_ns(ktime_sub(pf_end, pf_start)));
     }
 }
 
