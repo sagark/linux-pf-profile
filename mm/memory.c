@@ -3667,7 +3667,6 @@ static int handle_pte_fault(struct mm_struct *mm,
 		if (pte_file(entry))
 			return do_nonlinear_fault(mm, vma, address,
 					pte, pmd, flags, entry);
-        printk("confirm do swap page %lx\n", address);
 		return do_swap_page(mm, vma, address,
 					pte, pmd, flags, entry) | 0xF0000;
 	}
