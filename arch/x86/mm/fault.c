@@ -1251,7 +1251,7 @@ good_area:
 	up_read(&mm->mmap_sem);
     if (did_swap) {
         pf_end = ktime_get();
-        printk("pf swap time: %lld\n", ktime_to_ns(ktime_sub(pf_end, pf_start)));
+        printk("pf swap time: %lld %lx\n", ktime_to_ns(ktime_sub(pf_end, pf_start)), address);
     }
 }
 

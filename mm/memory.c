@@ -3011,6 +3011,7 @@ static int do_swap_page(struct mm_struct *mm, struct vm_area_struct *vma,
 		unsigned long address, pte_t *page_table, pmd_t *pmd,
 		unsigned int flags, pte_t orig_pte)
 {
+    ktime_t swapin_start, swapin_end;
 	spinlock_t *ptl;
 	struct page *page, *swapcache;
 	swp_entry_t entry;
@@ -3020,11 +3021,16 @@ static int do_swap_page(struct mm_struct *mm, struct vm_area_struct *vma,
 	int exclusive = 0;
 	int ret = 0;
 
-	if (!pte_unmap_same(mm, pmd, page_table, orig_pte))
+	if (!pte_unmap_same(mm, pmd, page_table, orig_pte)) {
+        printk("pte unmap %lx\n", address);
+
 		goto out;
+    }
 
 	entry = pte_to_swp_entry(orig_pte);
 	if (unlikely(non_swap_entry(entry))) {
+        printk("non-swap-entry %lx\n", address);
+
 		if (is_migration_entry(entry)) {
 			migration_entry_wait(mm, pmd, address);
 		} else if (is_hwpoison_entry(entry)) {
@@ -3038,8 +3044,13 @@ static int do_swap_page(struct mm_struct *mm, struct vm_area_struct *vma,
 	delayacct_set_flag(DELAYACCT_PF_SWAPIN);
 	page = lookup_swap_cache(entry);
 	if (!page) {
+        printk("doing swapin_readahead %lx\n", address);
+        swapin_start = ktime_get();
 		page = swapin_readahead(entry,
 					GFP_HIGHUSER_MOVABLE, vma, address);
+        swapin_end = ktime_get();
+        printk("swapin_readahead time %lld %lx\n", ktime_to_ns(ktime_sub(swapin_end, swapin_start)), address);
+
 		if (!page) {
 			/*
 			 * Back out if somebody else faulted in this pte
@@ -3050,13 +3061,17 @@ static int do_swap_page(struct mm_struct *mm, struct vm_area_struct *vma,
 				ret = VM_FAULT_OOM;
 			delayacct_clear_flag(DELAYACCT_PF_SWAPIN);
 			goto unlock;
-		}
+		} else {
+            printk("doing swapin_readahead -> page was found %lx\n", address);
+        }
 
 		/* Had to read the page from swap area: Major fault */
 		ret = VM_FAULT_MAJOR;
 		count_vm_event(PGMAJFAULT);
 		mem_cgroup_count_vm_event(mm, PGMAJFAULT);
 	} else if (PageHWPoison(page)) {
+        printk("doing hwpoison %lx\n", address);
+
 		/*
 		 * hwpoisoned dirty swapcache pages are kept for killing
 		 * owner processes (which may be unknown at hwpoison time)
@@ -3101,8 +3116,10 @@ static int do_swap_page(struct mm_struct *mm, struct vm_area_struct *vma,
 	 * Back out if somebody else already faulted in this pte.
 	 */
 	page_table = pte_offset_map_lock(mm, pmd, address, &ptl);
-	if (unlikely(!pte_same(*page_table, orig_pte)))
+	if (unlikely(!pte_same(*page_table, orig_pte))) {
+        printk("someone else already faulted on this PTE %lx\n", address);
 		goto out_nomap;
+    }
 
 	if (unlikely(!PageUptodate(page))) {
 		ret = VM_FAULT_SIGBUS;
