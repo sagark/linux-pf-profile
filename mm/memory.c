@@ -3022,14 +3022,14 @@ static int do_swap_page(struct mm_struct *mm, struct vm_area_struct *vma,
 	int ret = 0;
 
 	if (!pte_unmap_same(mm, pmd, page_table, orig_pte)) {
-        printk("pte unmap %lx\n", address);
+//        printk("pte unmap %lx\n", address);
 
 		goto out;
     }
 
 	entry = pte_to_swp_entry(orig_pte);
 	if (unlikely(non_swap_entry(entry))) {
-        printk("non-swap-entry %lx\n", address);
+//        printk("non-swap-entry %lx\n", address);
 
 		if (is_migration_entry(entry)) {
 			migration_entry_wait(mm, pmd, address);
@@ -3044,12 +3044,14 @@ static int do_swap_page(struct mm_struct *mm, struct vm_area_struct *vma,
 	delayacct_set_flag(DELAYACCT_PF_SWAPIN);
 	page = lookup_swap_cache(entry);
 	if (!page) {
-        printk("doing swapin_readahead %lx\n", address);
+//        printk("doing swapin_readahead %lx\n", address);
         swapin_start = ktime_get();
 		page = swapin_readahead(entry,
 					GFP_HIGHUSER_MOVABLE, vma, address);
         swapin_end = ktime_get();
-        printk("swapin_readahead time %lld %lx\n", ktime_to_ns(ktime_sub(swapin_end, swapin_start)), address);
+
+
+//        printk("swapin_readahead time %lld %lx\n", ktime_to_ns(ktime_sub(swapin_end, swapin_start)), address);
 
 		if (!page) {
 			/*
@@ -3061,16 +3063,17 @@ static int do_swap_page(struct mm_struct *mm, struct vm_area_struct *vma,
 				ret = VM_FAULT_OOM;
 			delayacct_clear_flag(DELAYACCT_PF_SWAPIN);
 			goto unlock;
-		} else {
+		} /*else {
             printk("doing swapin_readahead -> page was found %lx\n", address);
-        }
+        }*/
 
 		/* Had to read the page from swap area: Major fault */
-		ret = VM_FAULT_MAJOR;
+        printk("got: %lld\n", swapin_end.tv64 - swapin_start.tv64);
+		ret = VM_FAULT_MAJOR | ((int)(((swapin_end.tv64 - swapin_start.tv64) >> 15) << 17));
 		count_vm_event(PGMAJFAULT);
 		mem_cgroup_count_vm_event(mm, PGMAJFAULT);
 	} else if (PageHWPoison(page)) {
-        printk("doing hwpoison %lx\n", address);
+//        printk("doing hwpoison %lx\n", address);
 
 		/*
 		 * hwpoisoned dirty swapcache pages are kept for killing
@@ -3117,7 +3120,7 @@ static int do_swap_page(struct mm_struct *mm, struct vm_area_struct *vma,
 	 */
 	page_table = pte_offset_map_lock(mm, pmd, address, &ptl);
 	if (unlikely(!pte_same(*page_table, orig_pte))) {
-        printk("someone else already faulted on this PTE %lx\n", address);
+//        printk("someone else already faulted on this PTE %lx\n", address);
 		goto out_nomap;
     }
 
@@ -3685,7 +3688,7 @@ static int handle_pte_fault(struct mm_struct *mm,
 			return do_nonlinear_fault(mm, vma, address,
 					pte, pmd, flags, entry);
 		return do_swap_page(mm, vma, address,
-					pte, pmd, flags, entry) | 0xF0000;
+					pte, pmd, flags, entry) | 0x10000;
 	}
 
 	if (pte_numa(entry))

@@ -1205,8 +1205,8 @@ good_area:
 	 * the fault:
 	 */
 	fault = handle_mm_fault(mm, vma, address, flags);
-    did_swap = fault & 0xF0000;
-    fault &= 0xFFF0FFFF;
+    did_swap = fault & 0xFFFF0000;
+    fault &= 0x0000FFFF;
 
 	/*
 	 * If we need to retry but a fatal signal is pending, handle the
@@ -1252,6 +1252,7 @@ good_area:
     if (did_swap) {
         pf_end = ktime_get();
         printk("pf swap time: %lld %lx\n", ktime_to_ns(ktime_sub(pf_end, pf_start)), address);
+        printk("swapin_time: %d\n", ((did_swap >> 17) & 0x7FFF) << 15);
     }
 }
 
