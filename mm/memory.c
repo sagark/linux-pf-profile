@@ -3068,8 +3068,9 @@ static int do_swap_page(struct mm_struct *mm, struct vm_area_struct *vma,
         }*/
 
 		/* Had to read the page from swap area: Major fault */
-        printk("got: %lld\n", swapin_end.tv64 - swapin_start.tv64);
-		ret = VM_FAULT_MAJOR | ((int)(((swapin_end.tv64 - swapin_start.tv64) >> 15) << 17));
+        printk("got: %lld %llx\n", swapin_end.tv64 - swapin_start.tv64, address);
+        printk("shifted: %lld %llx\n", (((swapin_end.tv64 - swapin_start.tv64) >> 15) << 17), address);
+		ret = VM_FAULT_MAJOR | ((int)(((swapin_end.tv64 - swapin_start.tv64) >> 15) << 17)) | 0x10000;
 		count_vm_event(PGMAJFAULT);
 		mem_cgroup_count_vm_event(mm, PGMAJFAULT);
 	} else if (PageHWPoison(page)) {
@@ -3688,7 +3689,7 @@ static int handle_pte_fault(struct mm_struct *mm,
 			return do_nonlinear_fault(mm, vma, address,
 					pte, pmd, flags, entry);
 		return do_swap_page(mm, vma, address,
-					pte, pmd, flags, entry) | 0x10000;
+					pte, pmd, flags, entry);
 	}
 
 	if (pte_numa(entry))
