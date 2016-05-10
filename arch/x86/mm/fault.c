@@ -1252,7 +1252,7 @@ good_area:
     if (did_swap) {
         pf_end = ktime_get();
         printk("pf swap time: %lld %lx\n", ktime_to_ns(ktime_sub(pf_end, pf_start)), address);
-        printk("swapin_time: %d %lx\n", ((did_swap >> 17) & 0x7FFF) << 15, address);
+        printk("swapin_time: %d %lx\n", ((did_swap >> 17) & 0x7FFF) << 2, address);
     }
 }
 
