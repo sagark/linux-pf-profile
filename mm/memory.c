@@ -3021,15 +3021,11 @@ static int do_swap_page(struct mm_struct *mm, struct vm_area_struct *vma,
 	int exclusive = 0;
 	int ret = 0;
 
-	if (!pte_unmap_same(mm, pmd, page_table, orig_pte)) {
-//        printk("pte unmap %lx\n", address);
-
+	if (!pte_unmap_same(mm, pmd, page_table, orig_pte))
 		goto out;
-    }
 
 	entry = pte_to_swp_entry(orig_pte);
 	if (unlikely(non_swap_entry(entry))) {
-//        printk("non-swap-entry %lx\n", address);
 
 		if (is_migration_entry(entry)) {
 			migration_entry_wait(mm, pmd, address);
@@ -3044,7 +3040,6 @@ static int do_swap_page(struct mm_struct *mm, struct vm_area_struct *vma,
 	delayacct_set_flag(DELAYACCT_PF_SWAPIN);
 	page = lookup_swap_cache(entry);
 	if (!page) {
-//        printk("doing swapin_readahead %lx\n", address);
         swapin_start = ktime_get();
 		page = swapin_readahead(entry,
 					GFP_HIGHUSER_MOVABLE, vma, address);
@@ -3063,19 +3058,14 @@ static int do_swap_page(struct mm_struct *mm, struct vm_area_struct *vma,
 				ret = VM_FAULT_OOM;
 			delayacct_clear_flag(DELAYACCT_PF_SWAPIN);
 			goto unlock;
-		} /*else {
-            printk("doing swapin_readahead -> page was found %lx\n", address);
-        }*/
-
+		}
 		/* Had to read the page from swap area: Major fault */
-        printk("got: %lld %llx\n", swapin_end.tv64 - swapin_start.tv64, address);
-        printk("shifted: %lld %llx\n", (((swapin_end.tv64 - swapin_start.tv64) >> 15) << 17), address);
-		ret = VM_FAULT_MAJOR | ((int)(((swapin_end.tv64 - swapin_start.tv64) >> 15) << 17)) | 0x10000;
+//        printk("got: %lld %llx\n", swapin_end.tv64 - swapin_start.tv64, address);
+//        printk("shifted: %lld %llx\n", (((swapin_end.tv64 - swapin_start.tv64) >> 15) << 17), address);
+		ret = VM_FAULT_MAJOR /*| ((int)(((swapin_end.tv64 - swapin_start.tv64) >> 15) << 17))*/ | 0x10000;
 		count_vm_event(PGMAJFAULT);
 		mem_cgroup_count_vm_event(mm, PGMAJFAULT);
 	} else if (PageHWPoison(page)) {
-//        printk("doing hwpoison %lx\n", address);
-
 		/*
 		 * hwpoisoned dirty swapcache pages are kept for killing
 		 * owner processes (which may be unknown at hwpoison time)
@@ -3120,10 +3110,8 @@ static int do_swap_page(struct mm_struct *mm, struct vm_area_struct *vma,
 	 * Back out if somebody else already faulted in this pte.
 	 */
 	page_table = pte_offset_map_lock(mm, pmd, address, &ptl);
-	if (unlikely(!pte_same(*page_table, orig_pte))) {
-//        printk("someone else already faulted on this PTE %lx\n", address);
+	if (unlikely(!pte_same(*page_table, orig_pte)))
 		goto out_nomap;
-    }
 
 	if (unlikely(!PageUptodate(page))) {
 		ret = VM_FAULT_SIGBUS;
@@ -3183,8 +3171,10 @@ static int do_swap_page(struct mm_struct *mm, struct vm_area_struct *vma,
 
 	if (flags & FAULT_FLAG_WRITE) {
 		ret |= do_wp_page(mm, vma, address, page_table, pmd, ptl, pte);
-		if (ret & VM_FAULT_ERROR)
+		if (ret & VM_FAULT_ERROR) {
+            printk("THIS!!!!!!!!!!!!!!!!!!\n");
 			ret &= VM_FAULT_ERROR;
+        }
 		goto out;
 	}
 
